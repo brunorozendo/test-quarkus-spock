@@ -5,7 +5,7 @@ plugins {
     id 'java'
     id 'groovy' // For Spock tests
     id 'com.github.johnrengelman.shadow' version '8.1.1' // Plugin to find duplicated classes
-    //id 'org.kordamp.gradle.jandex' version '1.0.0'
+    id 'org.kordamp.gradle.jandex' version '2.1.0'
 }
 
 group = 'com.example'
