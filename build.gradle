@@ -1,7 +1,7 @@
 import java.util.jar.JarFile
 
 plugins {
-    id 'io.quarkus' version '3.21.3'
+    id 'io.quarkus' version '3.22.2'
     id 'java'
     id 'groovy' // For Spock tests
     id 'com.github.johnrengelman.shadow' version '8.1.1' // Plugin to find duplicated classes
@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    implementation enforcedPlatform("io.quarkus.platform:quarkus-bom:3.21.3")
+    implementation enforcedPlatform("io.quarkus.platform:quarkus-bom:3.22.2")
     // Quarkus core dependencies
     implementation 'io.quarkus:quarkus-arc'
 
@@ -52,18 +52,19 @@ dependencies {
     // Spock reports
     testImplementation "com.athaydes:spock-reports:2.5.1-groovy-4.0"
 
-    // Quarkus Testing
-    testImplementation 'io.quarkus:quarkus-junit5'
-    testImplementation 'io.rest-assured:rest-assured'
-
     implementation 'io.quarkiverse.spock:quarkus-spock:1.0-SNAPSHOT'
 
 }
 
-
-test {
+test{
+    useJUnitPlatform()
+    testLogging {
+        //events "FAILED","PASSED","SKIPPED","STANDARD_ERROR","STANDARD_OUT","STARTED"
+        events "FAILED","PASSED","SKIPPED"
+    }
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
 }
+
 
 // Configuration for the shadow plugin to find duplicated classes
 shadowJar {
@@ -123,5 +124,17 @@ tasks.register('checkDuplicateClasses') {
         }
 
         println "Duplicate classes report generated at: ${reportFile.absolutePath}"
+    }
+}
+
+afterEvaluate {
+    var taskJandex = tasks.named("jandex")
+    var quarkusDependenciesBuild = tasks.named("quarkusDependenciesBuild")
+    if (taskJandex && quarkusDependenciesBuild) {
+        quarkusDependenciesBuild.get().dependsOn(taskJandex)
+    } else {
+        println("One or both jandex related tasks are not present. Task quarkusDependenciesBuild.dependsOn(jandex).")
+        println("Task jandex: $taskJandex")
+        println("Task quarkusDependenciesBuild: $quarkusDependenciesBuild")
     }
 }

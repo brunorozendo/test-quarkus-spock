@@ -3,7 +3,6 @@ package com.example.repository
 import com.example.model.User
 import io.quarkus.test.junit.QuarkusTest
 import jakarta.inject.Inject
-import jakarta.transaction.Transactional
 import spock.lang.Specification
 
 /**
