@@ -1,8 +1,12 @@
 package com.example.repository
 
 import com.example.model.User
+import groovy.transform.PackageScope
+import io.quarkiverse.test.spock.QuarkusSpockTest
 import io.quarkus.test.junit.QuarkusTest
+import jakarta.enterprise.context.Dependent
 import jakarta.inject.Inject
+import jakarta.transaction.Transactional
 import spock.lang.Specification
 
 /**
@@ -10,9 +14,11 @@ import spock.lang.Specification
  * This test suite verifies that the UserRepository correctly interacts with the database
  * and properly handles user data operations.
  */
-@QuarkusTest
+@Dependent
+@QuarkusSpockTest
 class UserRepositorySpec extends Specification {
 
+    @PackageScope
     @Inject
     UserRepository userRepository
 
@@ -20,6 +26,7 @@ class UserRepositorySpec extends Specification {
      * Test that verifies the findByEmail method correctly retrieves a user when it exists.
      * It ensures that the repository returns the user with the correct properties.
      */
+    @Transactional
     def "should find user by email when user exists"() {
         given: "a user persisted in the database"
         def user = new User("John Doe", "john@example.com", "123456789")
@@ -39,6 +46,7 @@ class UserRepositorySpec extends Specification {
      * Test that verifies the findByEmail method correctly handles the case when a user doesn't exist.
      * It ensures that the repository returns null.
      */
+    @Transactional
     def "should return null when finding user by email that does not exist"() {
         when: "findByEmail is called with a non-existent email"
         def result = userRepository.findByEmail("nonexistent@example.com")
@@ -51,6 +59,7 @@ class UserRepositorySpec extends Specification {
      * Test that verifies the existsById method correctly identifies when a user exists.
      * It ensures that the repository returns true.
      */
+    @Transactional
     def "should return true when checking if user exists by id and user exists"() {
         given: "a user persisted in the database"
         def user = new User("Jane Doe", "jane@example.com", "987654321")
@@ -78,6 +87,7 @@ class UserRepositorySpec extends Specification {
     /**
      * Cleanup method that runs after each test to ensure the database is in a clean state.
      */
+    @Transactional
     void cleanup() {
         // Clean up after each test
         userRepository.deleteAll()

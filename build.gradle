@@ -54,6 +54,8 @@ dependencies {
 
     implementation 'io.quarkiverse.spock:quarkus-spock:1.0-SNAPSHOT'
 
+    implementation "io.quarkiverse.groovy:quarkus-groovy:3.22.1"
+
 }
 
 test{
