@@ -18,6 +18,7 @@ java {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -60,6 +61,9 @@ dependencies {
 }
 
 
+test {
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+}
 
 // Configuration for the shadow plugin to find duplicated classes
 shadowJar {
