@@ -1,0 +1,123 @@
+import java.util.jar.JarFile
+
+plugins {
+    id 'io.quarkus' version '3.21.3'
+    id 'java'
+    id 'groovy' // For Spock tests
+    id 'com.github.johnrengelman.shadow' version '8.1.1' // Plugin to find duplicated classes
+    //id 'org.kordamp.gradle.jandex' version '1.0.0'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+
+java {
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation enforcedPlatform("io.quarkus.platform:quarkus-bom:3.21.3")
+    // Quarkus core dependencies
+    implementation 'io.quarkus:quarkus-arc'
+
+    //implementation 'org.ow2.asm:asm:9.5'
+
+
+    // REST API
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-rest-jackson'
+
+    // Database and ORM
+    implementation 'io.quarkus:quarkus-hibernate-orm'
+    implementation 'io.quarkus:quarkus-hibernate-orm-panache'
+    implementation 'io.quarkus:quarkus-jdbc-h2'
+
+    // Validation
+    implementation 'io.quarkus:quarkus-hibernate-validator'
+
+    // H2 Database
+    runtimeOnly 'com.h2database:h2'
+
+    // Spock and Groovy for testing
+    testImplementation platform('org.spockframework:spock-bom:2.4-M6-groovy-4.0')
+    testImplementation 'org.spockframework:spock-core'
+
+    // Spock reports
+    testImplementation "com.athaydes:spock-reports:2.5.1-groovy-4.0"
+
+    // Quarkus Testing
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+
+    implementation 'io.quarkiverse.spock:quarkus-spock:1.0-SNAPSHOT'
+
+}
+
+
+
+// Configuration for the shadow plugin to find duplicated classes
+shadowJar {
+    // Enable checking for duplicate classes
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+
+    // Configure the duplicate classes finder
+    doFirst {
+        println "Checking for duplicate classes..."
+    }
+}
+
+/**
+ * Task to specifically check for duplicate classes in the classpath.
+ * This task scans all JAR files in the compile classpath and identifies classes with the same name
+ * that appear in multiple JAR files, which could lead to classloading issues.
+ * 
+ * Usage: ./gradlew checkDuplicateClasses
+ * 
+ * The report will be generated at: build/reports/duplicates/duplicate-classes-report.txt
+ */
+tasks.register('checkDuplicateClasses') {
+    group = 'verification'
+    description = 'Checks for duplicate classes in the classpath'
+
+    doLast {
+        def duplicatesDir = file("${buildDir}/reports/duplicates")
+        duplicatesDir.mkdirs()
+
+        def reportFile = file("${duplicatesDir}/duplicate-classes-report.txt")
+        reportFile.text = "Duplicate Classes Report\n"
+
+        def classPathFiles = configurations.compileClasspath.files
+        def classNames = [:]
+
+        classPathFiles.each { file ->
+            if (file.name.endsWith('.jar')) {
+                try {
+                    def jarFile = new JarFile(file)
+                    jarFile.entries().each { entry ->
+                        if (entry.name.endsWith('.class')) {
+                            def className = entry.name
+                            if (classNames.containsKey(className) && !className.contains("module-info.class") ){
+                                reportFile.append("Duplicate class: ${className}\n")
+                                reportFile.append("  Found in: ${classNames[className]}\n")
+                                reportFile.append("  Found in: ${file.name}\n\n")
+                            } else {
+                                classNames[className] = file.name
+                            }
+                        }
+                    }
+                    jarFile.close()
+                } catch (Exception e) {
+                    println "Error processing jar file ${file.name}: ${e.message}"
+                }
+            }
+        }
+
+        println "Duplicate classes report generated at: ${reportFile.absolutePath}"
+    }
+}
